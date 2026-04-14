@@ -16,7 +16,7 @@ concept Addable = requires (T a, T b) {
 
 template <typename T>
 concept Divisible = requires (T a, size_t n) {
-    { a / n } -> same_as<T>;
+    { a / n };
 };
 
 //para usarlo en el max
@@ -68,7 +68,7 @@ namespace core_numeric {
     template <Iterable C>
     requires Comparable<typename C::value_type>
     auto max(const C& c) {
-        typename C::value_type m = begin(c);
+        typename C::value_type m = *begin(c);
         for (const auto& x : c) {
             if (m < x) m = x;
         }
@@ -116,9 +116,4 @@ namespace core_numeric {
         ((max_val = (max_val < rest ? rest : max_val)), ...);
         return max_val;
     }
-}
-
-int main() {
-
-    return 0;
 }
