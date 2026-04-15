@@ -1,6 +1,7 @@
 #include <iostream>
 #include <concepts>
 #include <iterator>
+#include <cmath>
 using namespace std;
 
 template <typename C>
@@ -12,6 +13,12 @@ concept Iterable = requires (C c) {
 template <typename T>
 concept Addable = requires (T a, T b) {
     { a + b } -> same_as<T>;
+};
+
+// para los variadic
+template<typename... Ts>
+concept AddableVariadic = requires(Ts... args) {
+    (... + args);
 };
 
 template <typename T>
@@ -85,35 +92,32 @@ namespace core_numeric {
         return result;
     }
     //funciones que aceptan las multiples variables
-    template<typename T, typename... Mt>
-    requires Multiple<T, Mt...> && Addable<T>
-    auto sum_variadic(T init, Mt... fin) {
-        return (init + ... + fin);
+    template<typename... Ts>
+    requires AddableVariadic<Ts...>
+    auto sum_variadic(Ts... args) {
+        using Common = std::common_type_t<Ts...>;
+        return (Common{} + ... + static_cast<Common>(args));
     }
-    template<typename T, typename... Mt>
-    requires Multiple<T, Mt...> && Addable<T>
-    auto mean_variadic(T init, Mt... fin) {
-        auto sum = (init + ... + fin);
-        auto tam =sizeof...(fin) + 1;
-        if constexpr (std::is_integral_v<T>) {
-            return static_cast<double>(sum) / tam; //convertir para evitar truncamiento
-        } else {
-            return sum / tam; //ya es flotante
-        }
+    template<typename... Ts>
+    requires AddableVariadic<Ts...>
+    auto mean_variadic(Ts... args) {
+        using Common = std::common_type_t<Ts...>;
+        Common sum = (Common{} + ... + static_cast<Common>(args));
+        return sum / sizeof...(args);
     }
-    template<typename T, typename... Mt>
-    requires Multiple<T, Mt...> && Addable<T>
-    auto variance_variadic(T init, Mt... rest) {
-        auto m = mean_variadic(init, rest...);
-        auto tam = 1 + sizeof...(rest);
-        auto sumvar = (((init - m) * (init - m) )+ ... + (((rest - m) * (rest - m))));
-        return sumvar / tam;
+    template<typename... Ts>
+    requires AddableVariadic<Ts...>
+    auto variance_variadic(Ts... args) {
+        using Common = std::common_type_t<Ts...>;
+        Common m = mean_variadic(args...);
+        Common sum = (pow((Common(args) - m),2) + ...);
+        return sum / sizeof...(args);
     }
-    template<typename T, typename... Mt>
-    requires Multiple<T, Mt...> && Comparable<T>
-    auto max_variadic(T init, Mt... rest) {
-        T max_val = init;
-        ((max_val = (max_val < rest ? rest : max_val)), ...);
+    template<typename T, typename... Ts>
+    auto max_variadic(T first, Ts... rest) {
+        using Common = std::common_type_t<T, Ts...>;
+        Common max_val = first;
+        ((max_val = max_val < rest ? rest : max_val), ...);
         return max_val;
     }
 }
