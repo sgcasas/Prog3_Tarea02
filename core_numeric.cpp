@@ -69,7 +69,7 @@ namespace core_numeric {
         typename C::value_type m = mean(c);
         auto t = size(c);
         typename C::value_type s = 0;
-        for (int i = 0; i < t; i++) { s += pow(c[i] - m, 2); }
+        for (const auto& x : c) { s = s + (x-m) * (x-m); }
         return s / t;
     }
     template <Iterable C>
